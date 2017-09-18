@@ -1,0 +1,53 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.3"
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    testCompile 'junit:junit:4.12'
+}
+
+task makeJar(type: org.gradle.api.tasks.bundling.Jar,dependsOn: "build") {
+    //从哪里打包class文件
+    from('build/intermediates/classes/release/')
+    //打包到jar后的目录结构
+    into('')
+    //去掉不需要打包的目录和文件
+    exclude('test/', 'BuildConfig.class', 'R.class', 'android/')
+    //将classes.jar放入build/libs/目录下
+}
+
+//打包SDK
+task buildSDK(type: Copy,dependsOn: "makeJar") {
+    //设置拷贝的文件
+//    from('build/intermediates/jniLibs/release')//so
+    from('build/libs/')//jar
+//    from('build/outputs/aar/analytics-release.aar')//aar
+    //打进jar包后的文件目录
+    into('../demo/libs/')
+    //重命名
+//    rename ('classes.jar', 'sdk.jar')
+}

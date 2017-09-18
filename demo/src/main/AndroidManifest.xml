@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.duoku.demo.permission">
+
+
+    <!-- 在SDCard中创建与删除文件权限 -->
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <!-- 往读取DCard数据权限 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- 往SDCard写入数据权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--拍照-->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!--熄屏 亮屏-->
+    <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
+    <!--发送短信-->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <!--修改设置-->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <application
+        android:name=".DemoApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".PermissionActivity1">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.duoku.permission.TranslucentActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/TranslucentTheme" />
+        <activity android:name=".PermissionActivity2" />
+    </application>
+
+</manifest>
