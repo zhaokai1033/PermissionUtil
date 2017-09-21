@@ -349,28 +349,31 @@ public class PermissionUtil {
                     }
                 }
 //                }
-                ArrayList<String> requiredPermissions = new ArrayList<>();
+                ArrayList<String> requiredPermissionsRetry = new ArrayList<>();
+                ArrayList<String> requiredFailed = new ArrayList<>();
                 String p;
                 for (int i = 0; i < permissionNames.size(); i++) {
                     p = permissionNames.get(i);
                     if (mPermissionCallBack.isRequired(p)) {
                         //必须权限未允许 可提示
                         if (canShowTips.get(i)) {
-                            requiredPermissions.add(p);
+                            requiredPermissionsRetry.add(p);
                         }
                         //必须权限未允许且不可再提示
                         else {
                             //默认处理
-                            if (!mPermissionCallBack.onRequireFail(requiredPermissions.toArray(new String[requiredPermissions.size()]))) {
+                            if (!mPermissionCallBack.onRequireFail(requiredPermissionsRetry.toArray(new String[requiredPermissionsRetry.size()]))) {
                                 getAppDetailSetting(getContext());
                                 killSelf();
+                            } else {
+                                requiredFailed.add(p);
                             }
                         }
                     }
                 }
 
-                if (requiredPermissions.size() > 0) {
-                    createRequest(mRequestCode, mPermissionCallBack, requiredPermissions.toArray(new String[requiredPermissions.size()]));
+                if (requiredPermissionsRetry.size() > 0) {
+                    createRequest(mRequestCode, mPermissionCallBack, requiredPermissionsRetry.toArray(new String[requiredPermissionsRetry.size()]));
                     return;
                 }
 
@@ -378,7 +381,9 @@ public class PermissionUtil {
                 //结尾处理
                 if (mPermissionCallBack != null) {
                     //有被拒绝的
-                    if (permissionNames.size() > 0) {
+                    if (requiredFailed.size() > 0) {
+                        mPermissionCallBack.onRequireFail(requiredFailed.toArray(new String[requiredFailed.size()]));
+                    } else if (permissionNames.size() > 0) {
                         mPermissionCallBack.onRefused(permissionNames, canShowTips);
                     } else {//全部成功
                         mPermissionCallBack.onAllowedWitOutSpecial();

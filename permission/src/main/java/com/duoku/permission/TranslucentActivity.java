@@ -27,7 +27,7 @@ public class TranslucentActivity extends AppCompatActivity {
      * 权限请求工具
      */
 //    private PermissionUtil.PermissionObject mPermissionUtil;
-    private int mRequestCode;
+    private int mRequestCode = -1;
     private String[] mPermissions;
     private ArrayList<PermissionUtil.PermissionObject> utils = new ArrayList<>();
 
@@ -52,7 +52,9 @@ public class TranslucentActivity extends AppCompatActivity {
     }
 
     private void request(Intent intent) {
-        mRequestCode = intent.getIntExtra(Constants.REQUEST_CODE, 0);
+        if (mRequestCode == -1) {
+            mRequestCode = intent.getIntExtra(Constants.REQUEST_CODE, 0);
+        }
         mPermissions = intent.getStringArrayExtra(Constants.PERMISSIONS);
         String mAction = intent.getStringExtra(Constants.ACTION);
         PermissionUtil.PermissionObject
@@ -115,55 +117,58 @@ public class TranslucentActivity extends AppCompatActivity {
     }
 
     private OnPermissionCallBack getOnPermissionCallBack() {
-        return new OnPermissionCallBack() {
-            @Override
-            public void onAllowedWitOutSpecial() {
-                PermissionStore.getPermissionCallBack(mRequestCode).onAllowedWitOutSpecial();
-            }
-
-            @Override
-            public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onRefused(permissions, isCanShowTip);
-            }
-
-            @Override
-            public void onResult(int requestCode, String[] permissions, int[] grantResults) {
-                if (!this.equals(PermissionStore.getPermissionCallBack(mRequestCode))) {
-                    PermissionStore.getPermissionCallBack(mRequestCode).onResult(requestCode, permissions, grantResults);
-                }
-            }
-
-            @Override
-            public void onCheck(boolean[] booleans) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onCheck(booleans);
-            }
-
-            @Override
-            public void onError(String msg) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onError(msg);
-            }
-
-            @Override
-            public boolean isRequired(String permission) {
-                return true;
-            }
-
-            @Override
-            public boolean onRequireFail(String[] permissions) {
-                return PermissionStore.getPermissionCallBack(mRequestCode).onRequireFail(permissions);
-            }
-
-            @Override
-            public void onUnSupport(int requestCode, String[] permissions) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onUnSupport(requestCode, permissions);
-            }
-
-            @Override
-            public void onFinish() {
-                finish();
-            }
-        };
+        return onPermissionCallBack;
     }
+
+    private OnPermissionCallBack onPermissionCallBack =
+            new OnPermissionCallBack() {
+                @Override
+                public void onAllowedWitOutSpecial() {
+                    PermissionStore.getPermissionCallBack(mRequestCode).onAllowedWitOutSpecial();
+                }
+
+                @Override
+                public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
+                    PermissionStore.getPermissionCallBack(mRequestCode).onRefused(permissions, isCanShowTip);
+                }
+
+                @Override
+                public void onResult(int requestCode, String[] permissions, int[] grantResults) {
+                    if (!this.equals(PermissionStore.getPermissionCallBack(mRequestCode))) {
+                        PermissionStore.getPermissionCallBack(mRequestCode).onResult(requestCode, permissions, grantResults);
+                    }
+                }
+
+                @Override
+                public void onCheck(boolean[] booleans) {
+                    PermissionStore.getPermissionCallBack(mRequestCode).onCheck(booleans);
+                }
+
+                @Override
+                public void onError(String msg) {
+                    PermissionStore.getPermissionCallBack(mRequestCode).onError(msg);
+                }
+
+                @Override
+                public boolean isRequired(String permission) {
+                    return true;
+                }
+
+                @Override
+                public boolean onRequireFail(String[] permissions) {
+                    return PermissionStore.getPermissionCallBack(mRequestCode).onRequireFail(permissions);
+                }
+
+                @Override
+                public void onUnSupport(int requestCode, String[] permissions) {
+                    PermissionStore.getPermissionCallBack(mRequestCode).onUnSupport(requestCode, permissions);
+                }
+
+                @Override
+                public void onFinish() {
+                    finish();
+                }
+            };
 
     public static void create(int requestCode, String action, String[] permissions, OnPermissionCallBack onPermissionCallBack) {
         if (PermissionUtil.getContext() == null) {
