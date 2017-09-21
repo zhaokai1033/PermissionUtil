@@ -2,7 +2,11 @@ package com.duoku.permission;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Process;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -172,33 +176,34 @@ public class PermissionUtil {
                         throw new IllegalArgumentException("'mActivity' or 'mFragment' is null");
                     }
                 } else {
-                    //没有有特殊权限
-                    if (mPermissionsSpecial.size() <= 0) {
-                        //已经全部通过
-                        if (mPermissionCallBack != null) {
-                            mPermissionCallBack.onAllowed();
-                            mPermissionCallBack.onFinish();
-                        }
-                    } else {
-                        String[] sp = new String[mPermissionsSpecial.size()];
-                        int i = 0;
-                        //查找未请求的
-                        for (String permission : mPermissionsSpecial.keySet()) {
-                            //TODO 特殊权限 整合未完成
+//                    if (mPermissionsSpecial.size() <= 0) {
+                    //已经全部通过
+                    if (mPermissionCallBack != null) {
+                        mPermissionCallBack.onAllowedWitOutSpecial();
+                    }
+//                    } else {
+                    //有特殊权限
+                    String[] sp = new String[mPermissionsSpecial.size()];
+                    int i = 0;
+                    //查找未请求的
+                    for (String permission : mPermissionsSpecial.keySet()) {
+                        //TODO 特殊权限 整合未完成
 //                            //还未请求
 //                            if (!mPermissionsSpecial.get(permission).isRequest()) {
 //                                requestSpecial(permission);
 //                                return;
 //                            }
-                            sp[i] = permission;
-                            i++;
-                        }
-                        //特殊权限的暂不请求直接返回
-                        if (mPermissionCallBack != null) {
-                            mPermissionCallBack.onUnSupport(mRequestCode, sp);
-                            mPermissionCallBack.onFinish();
-                        }
+                        sp[i] = permission;
+                        i++;
                     }
+                    //特殊权限的暂不请求直接返回
+                    if (mPermissionCallBack != null) {
+                        mPermissionCallBack.onUnSupport(mRequestCode, sp);
+                    }
+                    if (mPermissionCallBack != null) {
+                        mPermissionCallBack.onFinish();
+                    }
+//                    }
                 }
             }
 
@@ -227,19 +232,6 @@ public class PermissionUtil {
                 }
                 if (checkRes == PackageManager.PERMISSION_GRANTED) {
                     neededPermissions.remove(perm.getPermissionName());
-                } else {
-                    boolean shouldShowRequestPermissionRationale;
-                    if (mActivity != null) {
-                        shouldShowRequestPermissionRationale =
-                                ActivityCompat.shouldShowRequestPermissionRationale(mActivity, perm.getPermissionName());
-                    } else if (mFragment != null) {
-                        shouldShowRequestPermissionRationale = mFragment.shouldShowRequestPermissionRationale(perm.getPermissionName());
-                    } else {
-                        throw new IllegalArgumentException("'mActivity' or 'mFragment' is null");
-                    }
-                    if (shouldShowRequestPermissionRationale) {
-                        perm.setRationalNeeded(true);
-                    }
                 }
                 i++;
             }
@@ -344,10 +336,44 @@ public class PermissionUtil {
                 for (int i = 0; i < permissions.length; i++) {
                     if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
                         permissionNames.add(permissions[i]);
-                        canShowTips.add(mPermissionsWeDoNotHave.get(permissions[i]).isRationalNeeded());
+                        boolean shouldShowRequestPermissionRationale;
+                        if (mActivity != null) {
+                            shouldShowRequestPermissionRationale =
+                                    ActivityCompat.shouldShowRequestPermissionRationale(mActivity, permissions[i]);
+                        } else if (mFragment != null) {
+                            shouldShowRequestPermissionRationale = mFragment.shouldShowRequestPermissionRationale(permissions[i]);
+                        } else {
+                            throw new IllegalArgumentException("'mActivity' or 'mFragment' is null");
+                        }
+                        canShowTips.add(shouldShowRequestPermissionRationale);
                     }
                 }
 //                }
+                ArrayList<String> requiredPermissions = new ArrayList<>();
+                String p;
+                for (int i = 0; i < permissionNames.size(); i++) {
+                    p = permissionNames.get(i);
+                    if (mPermissionCallBack.isRequired(p)) {
+                        //必须权限未允许 可提示
+                        if (canShowTips.get(i)) {
+                            requiredPermissions.add(p);
+                        }
+                        //必须权限未允许且不可再提示
+                        else {
+                            //默认处理
+                            if (!mPermissionCallBack.onRequireFail(requiredPermissions.toArray(new String[requiredPermissions.size()]))) {
+                                getAppDetailSetting(getContext());
+                                killSelf();
+                            }
+                        }
+                    }
+                }
+
+                if (requiredPermissions.size() > 0) {
+                    createRequest(mRequestCode, mPermissionCallBack, requiredPermissions.toArray(new String[requiredPermissions.size()]));
+                    return;
+                }
+
 
                 //结尾处理
                 if (mPermissionCallBack != null) {
@@ -355,7 +381,7 @@ public class PermissionUtil {
                     if (permissionNames.size() > 0) {
                         mPermissionCallBack.onRefused(permissionNames, canShowTips);
                     } else {//全部成功
-                        mPermissionCallBack.onAllowed();
+                        mPermissionCallBack.onAllowedWitOutSpecial();
                     }
 
                     if (mPermissionsSpecial.size() > 0) {
@@ -373,6 +399,28 @@ public class PermissionUtil {
         void setPermissionObject(PermissionObject permissionObject) {
             this.mPermissionObject = permissionObject;
         }
+    }
+
+    /**
+     * 杀死程序
+     */
+    private static void killSelf() {
+        Process.killProcess(Process.myPid());
+        System.exit(0);
+    }
+
+    private static void getAppDetailSetting(Context context) {
+        Intent localIntent = new Intent();
+        localIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT >= 9) {
+            localIntent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+            localIntent.setData(Uri.fromParts("package", context.getPackageName(), null));
+        } else if (Build.VERSION.SDK_INT <= 8) {
+            localIntent.setAction(Intent.ACTION_VIEW);
+            localIntent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
+            localIntent.putExtra("com.android.settings.ApplicationPkgName", context.getPackageName());
+        }
+        context.startActivity(localIntent);
     }
 
 }

@@ -12,13 +12,18 @@ import java.util.ArrayList;
 
 public abstract class OnRequestPermissionCallBack implements OnPermissionCallBack {
     @Override
-    public abstract void onAllowed();
+    public abstract void onAllowedWitOutSpecial();
 
     @Override
     public abstract void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip);
 
     @Override
     public abstract void onUnSupport(int requestCode, String[] permissions);
+
+    @Override
+    public boolean onRequireFail(String[] permissions) {
+        return false;
+    }
 
     @Override
     public void onResult(int requestCode, String[] permissions, int[] grantResults) {

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public abstract class OnCheckPermissionCallBack implements OnPermissionCallBack {
     @Override
-    public void onAllowed() {
+    public void onAllowedWitOutSpecial() {
 
     }
 
@@ -42,5 +42,15 @@ public abstract class OnCheckPermissionCallBack implements OnPermissionCallBack 
     @Override
     public final void onUnSupport(int requestCode, String[] permissions) {
 
+    }
+
+    @Override
+    public final boolean isRequired(String permission) {
+        return true;
+    }
+
+    @Override
+    public final boolean onRequireFail(String[] permissions) {
+        return true;
     }
 }

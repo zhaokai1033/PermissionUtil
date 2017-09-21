@@ -43,7 +43,7 @@ public class PermissionActivity2 extends AppCompatActivity {
                 mPermissionUtil
                         .createRequest(1001, new OnRequestPermissionCallBack() {
                             @Override
-                            public void onAllowed() {
+                            public void onAllowedWitOutSpecial() {
                                 ToastUtil.show(getApplicationContext(), "允许");
                             }
 
@@ -51,9 +51,15 @@ public class PermissionActivity2 extends AppCompatActivity {
                             public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
                                 ToastUtil.show(getApplicationContext(), permissions.toString() + "有拒绝的 " + isCanShowTip.toString());
                             }
+
                             @Override
                             public void onUnSupport(int requestCode, String[] permissions) {
                                 Log.d(TAG, Arrays.toString(permissions));
+                            }
+
+                            @Override
+                            public boolean isRequired(String permission) {
+                                return true;
                             }
 
                         }, new String[]{Manifest.permission.SEND_SMS})

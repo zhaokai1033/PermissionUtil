@@ -15,9 +15,9 @@ import java.util.ArrayList;
 
 public interface OnPermissionCallBack {
     /**
-     * 所有权限被允许
+     * 除特殊权限外所有权限被允许
      */
-    void onAllowed();
+    void onAllowedWitOutSpecial();
 
     /**
      * 有权限被拒绝
@@ -53,6 +53,20 @@ public interface OnPermissionCallBack {
      * @param msg 错误信息
      */
     void onError(String msg);
+
+    /**
+     * 当前权限是否是必须的
+     *
+     * @param permission 权限名称
+     * @return 是否必须、如必须 申请不通过退出
+     */
+    boolean isRequired(String permission);
+
+    /**
+     * 权限请求失败 有强制权限未通过
+     * @return false 默认处理 / true 已处理
+     */
+    boolean onRequireFail(String[] permissions);
 
     /**
      * 结束

@@ -38,7 +38,7 @@ public class PermissionActivity1 extends AppCompatActivity {
                         new OnRequestPermissionCallBack() {
 
                             @Override
-                            public void onAllowed() {
+                            public void onAllowedWitOutSpecial() {
 
                             }
 
@@ -50,6 +50,11 @@ public class PermissionActivity1 extends AppCompatActivity {
                             @Override
                             public void onUnSupport(int requestCode, String[] permissions) {
                                 Log.d(TAG, Arrays.toString(permissions));
+                            }
+
+                            @Override
+                            public boolean isRequired(String permission) {
+                                return false;
                             }
                         }, Manifest.permission.WRITE_SETTINGS);
             }
@@ -74,8 +79,8 @@ public class PermissionActivity1 extends AppCompatActivity {
             public void onClick(View view) {
                 PermissionUtil.createRequest(1001, new OnRequestPermissionCallBack() {
                     @Override
-                    public void onAllowed() {
-                        ToastUtil.show(getApplicationContext(), "允许");
+                    public void onAllowedWitOutSpecial() {
+                        ToastUtil.show(getApplicationContext(), "全部允许");
                     }
 
                     @Override
@@ -87,7 +92,20 @@ public class PermissionActivity1 extends AppCompatActivity {
                     public void onUnSupport(int requestCode, String[] permissions) {
                         Log.d(TAG, "UnSupport:" + Arrays.toString(permissions));
                     }
-                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.WRITE_SETTINGS});
+
+                    @Override
+                    public boolean isRequired(String permission) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onRequireFail(String[] permissions) {
+                        ToastUtil.show(getApplicationContext(), "未通过");
+                        return true;
+                    }
+                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                        , Manifest.permission.WRITE_SETTINGS
+                });
             }
         });
 
