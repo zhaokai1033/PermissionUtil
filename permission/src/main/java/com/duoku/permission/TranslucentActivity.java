@@ -1,6 +1,8 @@
 package com.duoku.permission;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -53,26 +55,46 @@ public class TranslucentActivity extends AppCompatActivity {
     }
 
     private void request(Intent intent) {
-        Temp temp = new Temp();
-        temp.requestCode = intent.getIntExtra(Constants.REQUEST_CODE, 0);
-        temp.permission = intent.getStringArrayExtra(Constants.PERMISSIONS).clone();
         String mAction = intent.getStringExtra(Constants.ACTION);
-                temp.permissionUtil = PermissionUtil.with(this);
-        tempArray.put(temp.requestCode,temp);
-        if (Constants.ACTION_CHECK.equals(mAction)) {
-            boolean[] bs = temp.permissionUtil.check(temp.permission);
-            PermissionStore.getPermissionCallBack(temp.requestCode).onCheck(bs);
-            cleanTempArray(temp.requestCode);
-            finish();
-        } else if (Constants.ACTION_REQUEST.equals(mAction)) {
-            temp.permissionUtil
-                    .createRequest(temp.requestCode
-                            , getOnPermissionCallBack(temp.requestCode), temp.permission)
-                    .request();
-        } else if (Constants.ACTION_SPECIAL.equals(mAction)) {
-            PermissionUtilSpecial.request(Constants.CODE_SPECIAL, this, null, getOnPermissionCallBack(temp.requestCode), temp.permission[0]);
-        } else {
-            Log.d(TAG, "这是做什么？");
+        if(Constants.ACTION_DIALOG.equals(mAction)) {
+            String title = intent.getStringExtra(Constants.TITLE);
+            String message = intent.getStringExtra(Constants.MESSAGE);
+            show(title,message);
+        }else {
+            Temp temp = new Temp();
+            temp.requestCode = intent.getIntExtra(Constants.REQUEST_CODE, 0);
+            temp.permission = intent.getStringArrayExtra(Constants.PERMISSIONS).clone();
+            temp.permissionUtil = PermissionUtil.with(this);
+            tempArray.put(temp.requestCode, temp);
+            if (Constants.ACTION_CHECK.equals(mAction)) {
+                boolean[] bs = temp.permissionUtil.check(temp.permission);
+                PermissionStore.getPermissionCallBack(temp.requestCode).onCheck(bs);
+                PermissionStore.getPermissionCallBack(temp.requestCode).onFinish();
+                cleanTempArray(temp.requestCode);
+                finish();
+            } else if (Constants.ACTION_REQUEST.equals(mAction)) {
+                boolean[] bs = temp.permissionUtil.check(temp.permission);
+                boolean flag = true;
+                for (boolean b:bs){
+                    flag = b&&flag;
+                }
+                //有未通过的
+                if(!flag) {
+                    temp.permissionUtil
+                            .createRequest(temp.requestCode
+                                    , getOnPermissionCallBack(temp.requestCode), temp.permission)
+                            .request();
+                }else {
+                    getOnPermissionCallBack(temp.requestCode).onAllowedWitOutSpecial();
+                    getOnPermissionCallBack(temp.requestCode).onFinish();
+                    cleanTempArray(temp.requestCode);
+                    finish();
+                }
+            } else if (Constants.ACTION_SPECIAL.equals(mAction)) {
+                PermissionUtilSpecial.request(Constants.CODE_SPECIAL, this, null, getOnPermissionCallBack(temp.requestCode), temp.permission[0]);
+            } else {
+                Log.d(TAG, "这是做什么？");
+            }
         }
     }
 
@@ -191,6 +213,40 @@ public class TranslucentActivity extends AppCompatActivity {
         if(tempArray.size()<=0) {
             super.finish();
         }
+    }
+
+    public static void showDialog(String title, String message) {
+        if (PermissionUtil.getContext() == null) {
+            return;
+        }
+        Intent intent = new Intent(PermissionUtil.getContext(), TranslucentActivity.class);
+        intent.putExtra(Constants.ACTION, Constants.ACTION_DIALOG);
+        intent.putExtra(Constants.MESSAGE, message);
+        intent.putExtra(Constants.TITLE, title);
+        if (!(PermissionUtil.getContext() instanceof Activity)) {
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        PermissionUtil.getContext().startActivity(intent);
+    }
+
+    private void show(String title,String message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("去设置", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        PermissionUtil.getAppDetailSetting(getApplication());
+                        PermissionUtil.killSelf();
+                    }
+                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        PermissionUtil.killSelf();
+                    }
+                });
+        builder.setCancelable(false);
+        builder.show();
     }
 
     public static class Temp{

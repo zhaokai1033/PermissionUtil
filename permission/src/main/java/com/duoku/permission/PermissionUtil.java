@@ -37,13 +37,15 @@ public class PermissionUtil {
         return new PermissionObject(fragment);
     }
 
-    public static void init(Context context) {
+    public static void init(Context context,OnPermissionRefused onRefused) {
         if (context instanceof Activity) {
             mActivity = new WeakReference<>(((Activity) context));
         }
         mApplication = new WeakReference<>(context.getApplicationContext());
+        if (onRefused != null)
+            mOnRefused = new WeakReference<OnPermissionRefused>(onRefused);
     }
-
+    private static WeakReference<OnPermissionRefused> mOnRefused;
     private static WeakReference<Context> mApplication;
     private static WeakReference<Activity> mActivity;
 
@@ -53,20 +55,29 @@ public class PermissionUtil {
         return mApplication.get();
     }
 
-    public static void check(int requestCode,OnPermissionCallBack onPermissionCallBack, String[] permissionName) {
-        TranslucentActivity.create(requestCode, Constants.ACTION_CHECK, permissionName, onPermissionCallBack);
+    public static void check(int requestCode,OnPermissionCallBack onPermissionCallBack, Permission... permissions) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_CHECK, getPermissionNames(permissions), onPermissionCallBack);
     }
 
-    public static void createRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, String[] permissionNames) {
-        TranslucentActivity.create(requestCode, Constants.ACTION_REQUEST, permissionNames, onPermissionCallBack);
+    public static void createRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission... permissions) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_REQUEST, getPermissionNames(permissions), onPermissionCallBack);
     }
 
-    public static void createRequestSpecial(int requestCode, OnPermissionCallBack onPermissionCallBack, String writeSettings) {
-        TranslucentActivity.create(requestCode, Constants.ACTION_SPECIAL, new String[]{writeSettings}, onPermissionCallBack);
+    public static void createRequestSpecial(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission permission) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_SPECIAL, getPermissionNames(permission), onPermissionCallBack);
     }
 
-    public static void createApplyRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, String[] permissionNames) {
-        TranslucentActivity.create(requestCode, Constants.ACTION_APPLY, permissionNames, onPermissionCallBack);
+    public static void createApplyRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission... permissions) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_APPLY, getPermissionNames(permissions), onPermissionCallBack);
+    }
+
+    private static String[] getPermissionNames(Permission... permissions) {
+        String[] strings = new String[permissions.length];
+        for (int i=0;i<permissions.length;i++) {
+            PermissionStore.addPermission(permissions[i]);
+            strings[i] = permissions[i].name;
+        }
+        return strings;
     }
 
     public static class PermissionObject {
@@ -182,12 +193,10 @@ public class PermissionUtil {
                         throw new IllegalArgumentException("'mActivity' or 'mFragment' is null");
                     }
                 } else {
-//                    if (mPermissionsSpecial.size() <= 0) {
                     //已经全部通过
                     if (mPermissionCallBack != null) {
                         mPermissionCallBack.onAllowedWitOutSpecial();
                     }
-//                    } else {
                     //有特殊权限
                     String[] sp = new String[mPermissionsSpecial.size()];
                     int i = 0;
@@ -215,8 +224,8 @@ public class PermissionUtil {
 
         }
 
-        private void requestSpecial(String permission) {
-            if (!TextUtils.isEmpty(permission)) {
+        private void requestSpecial(Permission permission) {
+            if (permission!=null) {
                 createRequestSpecial(mRequestCode, mPermissionCallBack, permission);
             }
         }
@@ -270,33 +279,6 @@ public class PermissionUtil {
                 if (mPermissionCallBack != null) {
                     mPermissionCallBack.onResult(requestCode, permissions, grantResults);
                 }
-//                //有特殊权限
-//                if (mPermissionsSpecial.size() > 0) {
-//                    //当前申请列表是一个 则是特殊申请
-//                    if (permissions.length == 1 && PermissionUtilSpecial.isSpecial(permissions[0])) {
-//                        String per = null;
-//                        for (SinglePermission p : mPermissionsSpecial.values()) {
-//                            //尚未申请
-//                            if (!p.isRequest()) {
-//                                //于当前返回的一致
-//                                if (p.getPermissionName().equals(permissions[0])) {
-//                                    p.setRequest(true);
-//                                }
-//                                //不一致 且未申请
-//                                else {
-//                                    per = p.getPermissionName();
-//                                }
-//                            }
-//                        }
-//                        // 有未申请的
-//                        if (!TextUtils.isEmpty(per)) {
-//                            PermissionUtilSpecial.request(mRequestCode, mActivity, mFragment, mPermissionCallBack, per);
-//                            return;
-//                        }
-//                    }
-                //有特殊权限时 普通权限申请回调
-//                    else {
-                //记录普通权限的申请状态
                 if (permissions.length > 0) {
                     for (int i = 0; i < permissions.length; i++) {
                         SinglePermission per = mPermissionsWeDoNotHave.get(permissions[i]);
@@ -305,40 +287,8 @@ public class PermissionUtil {
                         }
                     }
                 }
-//
-//                        String per = null;
-//                        for (SinglePermission p : mPermissionsSpecial.values()) {
-//                            //尚未申请
-//                            if (!p.isRequest()) {
-//                                //于当前返回的一致
-//                                if (p.getPermissionName().equals(permissions[0])) {
-//                                    p.setRequest(true);
-//                                }
-//                                //不一致 且未申请
-//                                else {
-//                                    per = p.getPermissionName();
-//                                }
-//                            }
-//                        }
-//
-//                        // 有未申请的
-//                        if (!TextUtils.isEmpty(per)) {
-//                            requestSpecial(per);
-//                            return;
-//                        }
-//                    }
-//                }
                 ArrayList<String> permissionNames = new ArrayList<>();
                 ArrayList<Boolean> canShowTips = new ArrayList<>();
-                //有特殊权限的
-//                if (mPermissionsSpecial.size() > 0) {
-//                    for (String per : mPermissionsWeDoNotHave.keySet()) {
-//                        permissionNames.add(per);
-//                        canShowTips.add(mPermissionsWeDoNotHave.get(per).isRationalNeeded());
-//                    }
-//                }
-                //正常权限列表
-//                else {
                 for (int i = 0; i < permissions.length; i++) {
                     if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
                         permissionNames.add(permissions[i]);
@@ -354,7 +304,6 @@ public class PermissionUtil {
                         canShowTips.add(shouldShowRequestPermissionRationale);
                     }
                 }
-//                }
                 ArrayList<String> requiredPermissionsRetry = new ArrayList<>();
                 ArrayList<String> requiredFailed = new ArrayList<>();
                 String p;
@@ -367,19 +316,31 @@ public class PermissionUtil {
                         }
                         //必须权限未允许且不可再提示
                         else {
-                            //默认处理
-                            if (!mPermissionCallBack.onRequireFail(requiredPermissionsRetry.toArray(new String[requiredPermissionsRetry.size()]))) {
-                                showDialog("权限申请","请在打开的窗口的权限中开启" + p + "权限，以正常使用本应用");
-                            } else {
-                                requiredFailed.add(p);
-                            }
+                            requiredFailed.add(p);
                         }
                     }
                 }
-
-                if (requiredPermissionsRetry.size() > 0) {
-                    createRequest(mRequestCode, mPermissionCallBack, requiredPermissionsRetry.toArray(new String[requiredPermissionsRetry.size()]));
+                //必须权限处理 开启设计界面
+                if(requiredFailed.size()>0){
+                    //默认处理
+                    if (!mPermissionCallBack.onRequireFail(requiredFailed.toArray(new String[requiredFailed.size()]))) {
+                        StringBuilder builder = new StringBuilder();
+                        for (String per:requiredFailed) {
+                            builder.append(PermissionStore.getPermission(per).message).append("\n");
+                        }
+                        TranslucentActivity.showDialog("权限申请",builder.toString());
+                    }
                     return;
+                }
+
+                //必须权限多次请求
+                if (requiredPermissionsRetry.size() > 0) {
+                    Permission[] ps = new Permission[requiredPermissionsRetry.size()];
+                    for (int i = 0; i < requiredPermissionsRetry.size(); i++) {
+                        ps[i] = PermissionStore.getPermission(requiredPermissionsRetry.get(i));
+                    }
+                    createRequest(mRequestCode, mPermissionCallBack,ps);
+                    return ;
                 }
 
 
@@ -402,8 +363,11 @@ public class PermissionUtil {
                 if (mPermissionObject != null && PermissionObject.objectSparseArray != null) {
                     PermissionObject.objectSparseArray.remove(requestCode);
                 }
-
+                //权限请求正常结束
+                return;
             }
+            //非当前请求
+            return;
         }
 
         void setPermissionObject(PermissionObject permissionObject) {
@@ -414,12 +378,17 @@ public class PermissionUtil {
     /**
      * 杀死程序
      */
-    private static void killSelf() {
-        Process.killProcess(Process.myPid());
-        System.exit(0);
+    static void killSelf() {
+        if (mOnRefused.get() == null || mOnRefused.get().onRefused("权限请求失败")) {
+            if (mActivity.get() != null) {
+                mActivity.get().finish();
+            }
+            Process.killProcess(Process.myPid());
+            System.exit(0);
+        }
     }
 
-    private static void getAppDetailSetting(Context context) {
+    static void getAppDetailSetting(Context context) {
         Intent localIntent = new Intent();
         localIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= 9) {
@@ -431,25 +400,5 @@ public class PermissionUtil {
             localIntent.putExtra("com.android.settings.ApplicationPkgName", context.getPackageName());
         }
         context.startActivity(localIntent);
-    }
-
-    private static void showDialog(String title,String message){
-        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity.get()).setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("去设置", new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        getAppDetailSetting(getContext());
-                        killSelf();
-                    }
-                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        killSelf();
-                    }
-                });
-        builder.setCancelable(false);
-        builder.show();
     }
 }

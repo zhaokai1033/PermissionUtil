@@ -1,6 +1,7 @@
 package com.duoku.demo.permission;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -12,7 +13,9 @@ import android.util.Log;
 import android.view.View;
 
 import com.duoku.permission.OnCheckPermissionCallBack;
+import com.duoku.permission.OnPermissionRefused;
 import com.duoku.permission.OnRequestPermissionCallBack;
+import com.duoku.permission.Permission;
 import com.duoku.permission.PermissionUtil;
 
 import java.util.ArrayList;
@@ -26,7 +29,13 @@ public class PermissionActivity1 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        PermissionUtil.init(this);
+        PermissionUtil.init(this, new OnPermissionRefused() {
+            @Override
+            public boolean onRefused(String msg) {
+
+                return true;
+            }
+        });
 
 
         setContentView(R.layout.activity_1);
@@ -66,18 +75,17 @@ public class PermissionActivity1 extends AppCompatActivity {
                                             public boolean onRequireFail(String[] permissions) {
                                                 return super.onRequireFail(permissions);
                                             }
-                                        },
-                                        new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        }, getTestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                                 Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE,
-                                                Manifest.permission.READ_CONTACTS, Manifest.permission.ACCESS_COARSE_LOCATION});
+                                                Manifest.permission.READ_CONTACTS, Manifest.permission.ACCESS_COARSE_LOCATION}));
                                 break;
                             }
                             ToastUtil.show(getApplicationContext(), "已经允许");
                         }
                     }
-                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                }, getTestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS,
-                        Manifest.permission.ACCESS_COARSE_LOCATION});
+                        Manifest.permission.ACCESS_COARSE_LOCATION}));
             }
         });
 
@@ -90,7 +98,7 @@ public class PermissionActivity1 extends AppCompatActivity {
                     public void onCheck(boolean[] booleans) {
                         ToastUtil.show(getApplicationContext(), booleans[0] && booleans[1] ? "允许" : "禁止");
                     }
-                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE});
+                }, getTestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}));
             }
         });
 
@@ -124,9 +132,9 @@ public class PermissionActivity1 extends AppCompatActivity {
                         ToastUtil.show(getApplicationContext(), "未通过");
                         return true;
                     }
-                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                }, getTestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE
 //                        , Manifest.permission.WRITE_SETTINGS
-                });
+                }));
             }
         });
 
@@ -149,6 +157,18 @@ public class PermissionActivity1 extends AppCompatActivity {
                 startActivity(new Intent(PermissionActivity1.this, PermissionActivity2.class));
             }
         });
+    }
+
+    private Permission[] getTestPermissions(String... names) {
+        ArrayList<Permission> ps = new ArrayList<>();
+        for (int i = 0; i < names.length; i++) {
+            Permission p = new Permission();
+            p.name = names[i];
+            p.title = "权限";
+            p.message = "必须权限啊";
+            ps.add(p);
+        }
+        return ps.toArray(new Permission[names.length]);
     }
 
     @Override
