@@ -18,6 +18,7 @@ public class Constants {
     public static final String ACTION_SPECIAL = "action_special";
     public static final String ACTION_REQUEST = "action_request";
     public static final String ACTION_CHECK = "action_check";
+    public static final String ACTION_APPLY = "action_apply";
     public static final String[] SPECIAL_PERMISSION = new String[]{
             Manifest.permission.SYSTEM_ALERT_WINDOW, Manifest.permission.WRITE_SETTINGS
     };

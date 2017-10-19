@@ -34,29 +34,50 @@ public class PermissionActivity1 extends AppCompatActivity {
         findViewById(R.id.test).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PermissionUtil.createRequestSpecial(1003,
-                        new OnRequestPermissionCallBack() {
+                PermissionUtil.check(2000, new OnCheckPermissionCallBack() {
+                    @Override
+                    public void onCheck(boolean[] booleans) {
+                        for (int i = 0; i < booleans.length; i++) {
+                            if (!booleans[i]) {
+                                ToastUtil.show(getApplicationContext(), "有未请求的");
+                                PermissionUtil.createRequest(2001,
+                                        new OnRequestPermissionCallBack() {
+                                            @Override
+                                            public void onAllowedWitOutSpecial() {
+                                                ToastUtil.show(getApplicationContext(), "全部允许");
+                                            }
 
-                            @Override
-                            public void onAllowedWitOutSpecial() {
+                                            @Override
+                                            public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
+                                                ToastUtil.show(getApplicationContext(), "拒绝：" + permissions.toString());
+                                            }
 
+                                            @Override
+                                            public void onUnSupport(int requestCode, String[] permissions) {
+
+                                            }
+
+                                            @Override
+                                            public boolean isRequired(String permission) {
+                                                return true;
+                                            }
+
+                                            @Override
+                                            public boolean onRequireFail(String[] permissions) {
+                                                return super.onRequireFail(permissions);
+                                            }
+                                        },
+                                        new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                                Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE,
+                                                Manifest.permission.READ_CONTACTS, Manifest.permission.ACCESS_COARSE_LOCATION});
+                                break;
                             }
-
-                            @Override
-                            public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
-
-                            }
-
-                            @Override
-                            public void onUnSupport(int requestCode, String[] permissions) {
-                                Log.d(TAG, Arrays.toString(permissions));
-                            }
-
-                            @Override
-                            public boolean isRequired(String permission) {
-                                return false;
-                            }
-                        }, Manifest.permission.WRITE_SETTINGS);
+                            ToastUtil.show(getApplicationContext(), "已经允许");
+                        }
+                    }
+                }, new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS,
+                        Manifest.permission.ACCESS_COARSE_LOCATION});
             }
         });
 
@@ -64,7 +85,7 @@ public class PermissionActivity1 extends AppCompatActivity {
         findViewById(R.id.tv1).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PermissionUtil.check(new OnCheckPermissionCallBack() {
+                PermissionUtil.check(1000, new OnCheckPermissionCallBack() {
                     @Override
                     public void onCheck(boolean[] booleans) {
                         ToastUtil.show(getApplicationContext(), booleans[0] && booleans[1] ? "允许" : "禁止");

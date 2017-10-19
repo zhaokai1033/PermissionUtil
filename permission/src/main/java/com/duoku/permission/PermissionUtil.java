@@ -1,7 +1,9 @@
 package com.duoku.permission;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -51,8 +53,8 @@ public class PermissionUtil {
         return mApplication.get();
     }
 
-    public static void check(OnPermissionCallBack onPermissionCallBack, String[] permissionName) {
-        TranslucentActivity.create(10, Constants.ACTION_CHECK, permissionName, onPermissionCallBack);
+    public static void check(int requestCode,OnPermissionCallBack onPermissionCallBack, String[] permissionName) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_CHECK, permissionName, onPermissionCallBack);
     }
 
     public static void createRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, String[] permissionNames) {
@@ -61,6 +63,10 @@ public class PermissionUtil {
 
     public static void createRequestSpecial(int requestCode, OnPermissionCallBack onPermissionCallBack, String writeSettings) {
         TranslucentActivity.create(requestCode, Constants.ACTION_SPECIAL, new String[]{writeSettings}, onPermissionCallBack);
+    }
+
+    public static void createApplyRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, String[] permissionNames) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_APPLY, permissionNames, onPermissionCallBack);
     }
 
     public static class PermissionObject {
@@ -363,8 +369,7 @@ public class PermissionUtil {
                         else {
                             //默认处理
                             if (!mPermissionCallBack.onRequireFail(requiredPermissionsRetry.toArray(new String[requiredPermissionsRetry.size()]))) {
-                                getAppDetailSetting(getContext());
-                                killSelf();
+                                showDialog("权限申请","请在打开的窗口的权限中开启" + p + "权限，以正常使用本应用");
                             } else {
                                 requiredFailed.add(p);
                             }
@@ -428,4 +433,23 @@ public class PermissionUtil {
         context.startActivity(localIntent);
     }
 
+    private static void showDialog(String title,String message){
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity.get()).setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("去设置", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        getAppDetailSetting(getContext());
+                        killSelf();
+                    }
+                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        killSelf();
+                    }
+                });
+        builder.setCancelable(false);
+        builder.show();
+    }
 }

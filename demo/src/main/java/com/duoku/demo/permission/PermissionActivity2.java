@@ -1,6 +1,8 @@
 package com.duoku.demo.permission;
 
 import android.Manifest;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -70,10 +72,14 @@ public class PermissionActivity2 extends AppCompatActivity {
         findViewById(R.id.tv3).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SmsManager smsMgr = SmsManager.getDefault();
+//                SmsManager smsMgr = SmsManager.getDefault();
                 String message = "消息内容";
                 String address = "15210087223";
-                smsMgr.sendTextMessage(address, null, message, null, null);
+//                smsMgr.sendTextMessage(address, null, message, null, null);
+                Uri uri = Uri.parse("smsto:" + address);
+                Intent sendIntent = new Intent(Intent.ACTION_VIEW, uri);
+                sendIntent.putExtra("sms_body", message);
+                startActivityForResult(sendIntent, 1002 );
             }
         });
     }
