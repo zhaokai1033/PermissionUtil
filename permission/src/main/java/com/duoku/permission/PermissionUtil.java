@@ -12,7 +12,7 @@ import android.os.Process;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+//import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.SparseArray;
 
@@ -29,7 +29,7 @@ import java.util.HashMap;
  */
 public class PermissionUtil {
 
-    public static PermissionObject with(AppCompatActivity activity) {
+    public static PermissionObject with(Activity activity) {
         return new PermissionObject(activity);
     }
 
@@ -87,10 +87,10 @@ public class PermissionUtil {
     public static class PermissionObject {
 
         private static SparseArray<PermissionRequestObject> objectSparseArray = new SparseArray<>();
-        private AppCompatActivity mActivity;
+        private Activity mActivity;
         private Fragment mFragment;
 
-        PermissionObject(AppCompatActivity activity) {
+        PermissionObject(Activity activity) {
             mActivity = activity;
         }
 
@@ -150,7 +150,7 @@ public class PermissionUtil {
 
     public static class PermissionRequestObject {
 
-        private AppCompatActivity mActivity;
+        private Activity mActivity;
         private Fragment mFragment;
         private String[] mPermissionNames;
         private HashMap<String, SinglePermission> mPermissionsWeDoNotHave = new HashMap<>();
@@ -159,7 +159,7 @@ public class PermissionUtil {
         private OnPermissionCallBack mPermissionCallBack;
         private PermissionObject mPermissionObject;
 
-        private PermissionRequestObject(int requestCode, AppCompatActivity activity, String[] permissionNames, OnPermissionCallBack onPermissionCallBack) {
+        private PermissionRequestObject(int requestCode, Activity activity, String[] permissionNames, OnPermissionCallBack onPermissionCallBack) {
             mActivity = activity;
             mPermissionNames = permissionNames;
             mRequestCode = requestCode;
@@ -265,7 +265,7 @@ public class PermissionUtil {
         }
 
         /**
-         * This Method should be called from {@link AppCompatActivity#onRequestPermissionsResult(int, String[], int[])
+         * This Method should be called from {@link Activity#onRequestPermissionsResult(int, String[], int[])
          * onRequestPermissionsResult} with all the same incoming operands
          * <pre>
          * {@code
