@@ -2,6 +2,8 @@
 
 *Android permission application*
 
+#### 演示
+
   ![image](https://github.com/zhaokai1033/PermissionUtil/blob/master/Demo.gif)
 
 #### 一、引用
