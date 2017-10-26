@@ -2,6 +2,8 @@
 
 *Android permission application*
 
+  ![image](https://github.com/zhaokai1033/PermissionUtil/blob/master/Demo.gif)
+
 #### 一、引用
 
 1. [jar](https://github.com/zhaokai1033/PermissionUtil/blob/master/demo/libs/permission.jar)
