@@ -43,7 +43,7 @@ public class PermissionUtil {
         }
         mApplication = new WeakReference<>(context.getApplicationContext());
         if (onRefused != null)
-            mOnRefused = new WeakReference<OnPermissionRefused>(onRefused);
+            mOnRefused = new WeakReference<>(onRefused);
     }
     private static WeakReference<OnPermissionRefused> mOnRefused;
     private static WeakReference<Context> mApplication;
@@ -61,6 +61,10 @@ public class PermissionUtil {
 
     public static void createRequest(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission... permissions) {
         TranslucentActivity.create(requestCode, Constants.ACTION_REQUEST, getPermissionNames(permissions), onPermissionCallBack);
+    }
+
+    public static void createRequestRetry(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission... permissions) {
+        TranslucentActivity.create(requestCode, Constants.ACTION_REQUEST_RETRY, getPermissionNames(permissions), onPermissionCallBack);
     }
 
     public static void createRequestSpecial(int requestCode, OnPermissionCallBack onPermissionCallBack, Permission permission) {
@@ -339,7 +343,7 @@ public class PermissionUtil {
                     for (int i = 0; i < requiredPermissionsRetry.size(); i++) {
                         ps[i] = PermissionStore.getPermission(requiredPermissionsRetry.get(i));
                     }
-                    createRequest(mRequestCode, mPermissionCallBack,ps);
+                    createRequestRetry(mRequestCode, mPermissionCallBack,ps);
                     return ;
                 }
 

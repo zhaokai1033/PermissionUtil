@@ -63,8 +63,13 @@ public class TranslucentActivity extends AppCompatActivity {
         }else {
             Temp temp = new Temp();
             temp.requestCode = intent.getIntExtra(Constants.REQUEST_CODE, 0);
+            temp.requestCodeRetry = intent.getIntExtra(Constants.REQUEST_CODE_RETRY,-1);
             temp.permission = intent.getStringArrayExtra(Constants.PERMISSIONS).clone();
             temp.permissionUtil = PermissionUtil.with(this);
+//            if(tempArray.get(temp.requestCode)!=null){
+//                temp.permissionRetry = temp.permission;
+//                temp.permission = tempArray.get(temp.requestCode).permission;
+//            }
             tempArray.put(temp.requestCode, temp);
             if (Constants.ACTION_CHECK.equals(mAction)) {
                 boolean[] bs = temp.permissionUtil.check(temp.permission);
@@ -72,8 +77,15 @@ public class TranslucentActivity extends AppCompatActivity {
                 PermissionStore.getPermissionCallBack(temp.requestCode).onFinish();
                 cleanTempArray(temp.requestCode);
                 finish();
-            } else if (Constants.ACTION_REQUEST.equals(mAction)) {
-                boolean[] bs = temp.permissionUtil.check(temp.permission);
+            } else if (Constants.ACTION_REQUEST.equals(mAction)||Constants.ACTION_REQUEST_RETRY.equals(mAction)) {
+
+                boolean[] bs ;
+//                if(Constants.ACTION_REQUEST.equals(mAction)) {
+                    bs = temp.permissionUtil.check(temp.permission);
+//                }else {
+//                    temp.requestCode = intent.getIntExtra(Constants.REQUEST_CODE_RETRY,-1);
+//                    bs = temp.permissionUtil.check(temp.permissionRetry);
+//                }
                 boolean flag = true;
                 for (boolean b:bs){
                     flag = b&&flag;
@@ -82,16 +94,16 @@ public class TranslucentActivity extends AppCompatActivity {
                 if(!flag) {
                     temp.permissionUtil
                             .createRequest(temp.requestCode
-                                    , getOnPermissionCallBack(temp.requestCode), temp.permission)
+                                    , getOnPermissionCallBack(temp.requestCodeRetry,temp.requestCode), temp.permission)
                             .request();
                 }else {
-                    getOnPermissionCallBack(temp.requestCode).onAllowedWitOutSpecial();
-                    getOnPermissionCallBack(temp.requestCode).onFinish();
+                    getOnPermissionCallBack(temp.requestCodeRetry,temp.requestCode).onAllowedWitOutSpecial();
+                    getOnPermissionCallBack(temp.requestCodeRetry,temp.requestCode).onFinish();
                     cleanTempArray(temp.requestCode);
                     finish();
                 }
             } else if (Constants.ACTION_SPECIAL.equals(mAction)) {
-                PermissionUtilSpecial.request(Constants.CODE_SPECIAL, this, null, getOnPermissionCallBack(temp.requestCode), temp.permission[0]);
+                PermissionUtilSpecial.request(Constants.CODE_SPECIAL, this, null, getOnPermissionCallBack(temp.requestCodeRetry,temp.requestCode), temp.permission[0]);
             } else {
                 Log.d(TAG, "这是做什么？");
             }
@@ -132,56 +144,106 @@ public class TranslucentActivity extends AppCompatActivity {
 
     private void cleanTempArray(int requestCode){
         tempArray.remove(requestCode);
+        if(requestCode<0)
         PermissionStore.remove(requestCode);
     }
 
-    private OnPermissionCallBack getOnPermissionCallBack(final int mRequestCode) {
+    public static OnPermissionCallBack getOnPermissionCallBack(final int mRequestCode,final int original) {
         return  new OnPermissionCallBack() {
             @Override
             public void onAllowedWitOutSpecial() {
-                PermissionStore.getPermissionCallBack(mRequestCode).onAllowedWitOutSpecial();
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    callBack.onAllowedWitOutSpecial();
+                }
             }
 
             @Override
             public void onRefused(ArrayList<String> permissions, ArrayList<Boolean> isCanShowTip) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onRefused(permissions, isCanShowTip);
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    callBack.onRefused(permissions, isCanShowTip);
+                }
             }
 
             @Override
             public void onResult(int requestCode, String[] permissions, int[] grantResults) {
-                if (!this.equals(PermissionStore.getPermissionCallBack(mRequestCode))) {
-                    PermissionStore.getPermissionCallBack(mRequestCode).onResult(requestCode, permissions, grantResults);
+
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    callBack.onResult(requestCode, permissions, grantResults);
                 }
             }
 
             @Override
             public void onCheck(boolean[] booleans) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onCheck(booleans);
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    callBack.onCheck(booleans);
+                }
             }
 
             @Override
             public void onError(String msg) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onError(msg);
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    callBack.onError(msg);
+                }
             }
 
             @Override
             public boolean isRequired(String permission) {
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                    return callBack.isRequired(permission);
+                }
                 return true;
             }
 
             @Override
             public boolean onRequireFail(String[] permissions) {
-                return PermissionStore.getPermissionCallBack(mRequestCode).onRequireFail(permissions);
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null&&callBack!=this) {
+                   return callBack.onRequireFail(permissions);
+                }
+                return true;
             }
 
             @Override
             public void onUnSupport(int requestCode, String[] permissions) {
-                PermissionStore.getPermissionCallBack(mRequestCode).onUnSupport(requestCode, permissions);
+                OnPermissionCallBack callBack = PermissionStore.getPermissionCallBack(mRequestCode);
+                if(callBack==this||callBack==null){
+                    callBack =PermissionStore.getPermissionCallBack(original);
+                }
+                if(callBack!=null) {
+                    callBack.onUnSupport(requestCode, permissions);
+                }
             }
 
             @Override
             public void onFinish() {
-                finish();
+
             }
         };
     }
@@ -192,8 +254,16 @@ public class TranslucentActivity extends AppCompatActivity {
             onPermissionCallBack.onError("'context' is null ");
             return;
         }
-        PermissionStore.addPermissionCallBack(requestCode, onPermissionCallBack);
         Intent intent = new Intent(PermissionUtil.getContext(), TranslucentActivity.class);
+        if(Constants.ACTION_REQUEST_RETRY.equals(action)){
+            int r = -requestCode;
+            while (PermissionStore.getPermissionCallBack(r)!=null){
+                r=r-1;
+            }
+            intent.putExtra(Constants.REQUEST_CODE_RETRY, r);
+        }else {
+            PermissionStore.addPermissionCallBack(requestCode, onPermissionCallBack);
+        }
         intent.putExtra(Constants.REQUEST_CODE, requestCode);
         intent.putExtra(Constants.ACTION, action);
         intent.putExtra(Constants.PERMISSIONS, permissions);
@@ -252,6 +322,8 @@ public class TranslucentActivity extends AppCompatActivity {
     public static class Temp{
         PermissionUtil.PermissionObject permissionUtil;
         String[] permission;
+        String[] permissionRetry;
         int requestCode;
+        int requestCodeRetry;
     }
 }

@@ -164,8 +164,8 @@ public class PermissionActivity1 extends AppCompatActivity {
         for (int i = 0; i < names.length; i++) {
             Permission p = new Permission();
             p.name = names[i];
-            p.title = "权限";
-            p.message = "必须权限啊";
+            p.title = "权限"+i;
+            p.message = "必须权限啊:"+i;
             ps.add(p);
         }
         return ps.toArray(new Permission[names.length]);
